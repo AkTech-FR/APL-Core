@@ -1,10 +1,10 @@
-package me.xtrm.atlasmodloader.core.load;
+package me.xtrm.atlaspluginloader.core.load;
 
 import java.io.IOException;
 
-import me.xtrm.atlasmodloader.core.AtlasPluginLoader;
-import me.xtrm.atlasmodloader.core.load.plugin.PluginManager;
-import me.xtrm.atlasmodloader.core.load.plugin.exception.PluginLoadingException;
+import me.xtrm.atlaspluginloader.core.AtlasPluginLoader;
+import me.xtrm.atlaspluginloader.core.load.plugin.PluginManager;
+import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginLoadingException;
 
 public class LoadController {
 	

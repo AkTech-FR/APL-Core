@@ -1,4 +1,4 @@
-package me.xtrm.atlasmodloader.api.reflect;
+package me.xtrm.atlaspluginloader.api.reflect;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;

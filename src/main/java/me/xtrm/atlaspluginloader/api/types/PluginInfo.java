@@ -1,4 +1,4 @@
-package me.xtrm.atlasmodloader.api.types;
+package me.xtrm.atlaspluginloader.api.types;
 
 public @interface PluginInfo {
 	

@@ -1,4 +1,4 @@
-package me.xtrm.atlasmodloader.core.load.plugin;
+package me.xtrm.atlaspluginloader.core.load.plugin;
 
 import java.net.URL;
 import java.net.URLClassLoader;

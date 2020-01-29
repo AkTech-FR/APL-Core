@@ -1,11 +1,11 @@
-package me.xtrm.atlasmodloader.core;
+package me.xtrm.atlaspluginloader.core;
 
 import java.io.File;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import me.xtrm.atlasmodloader.core.load.LoadController;
+import me.xtrm.atlaspluginloader.core.load.LoadController;
 
 public class AtlasPluginLoader {
 	

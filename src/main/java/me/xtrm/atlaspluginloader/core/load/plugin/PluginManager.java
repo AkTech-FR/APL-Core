@@ -1,4 +1,4 @@
-package me.xtrm.atlasmodloader.core.load.plugin;
+package me.xtrm.atlaspluginloader.core.load.plugin;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,10 +16,10 @@ import java.util.jar.Manifest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import me.xtrm.atlasmodloader.api.types.IPlugin;
-import me.xtrm.atlasmodloader.api.types.PluginInfo;
-import me.xtrm.atlasmodloader.core.AtlasPluginLoader;
-import me.xtrm.atlasmodloader.core.load.plugin.exception.PluginLoadingException;
+import me.xtrm.atlaspluginloader.api.types.IPlugin;
+import me.xtrm.atlaspluginloader.api.types.PluginInfo;
+import me.xtrm.atlaspluginloader.core.AtlasPluginLoader;
+import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginLoadingException;
 
 public class PluginManager {
 
