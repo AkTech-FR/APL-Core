@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to AtlasPluginLoader 👋</h1>
+﻿<h1 align="center">Welcome to AtlasPluginLoader 👋</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.0.1--beta-blue.svg?cacheSeconds=2592000" />
   <a href="https://twitter.com/xtrmdev" target="_blank">
@@ -8,12 +8,12 @@
 
 > APL is a simple, reliable, efficent and portable Plugin Loader. 
 
-### 🏠 [Homepage](http://nkosmos.fr/atlasmodloader/)
+### 🏠 [Homepage](http://nkosmos.fr/atlaspluginloader/)
 
 ## Install
 
 ```sh
-git clone https://github.com/AtlasPluginLoader/AtlasPluginLoader.git
+git clone https://github.com/AtlasPluginLoader/APL-Core.git
 ```
 
 ## Usage
@@ -32,7 +32,7 @@ gradlew build
 
 ## 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/AtlasPluginLoader/AtlasPluginLoader/issues). 
+Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/AtlasPluginLoader/APL-Core/issues). 
 
 ## Show your support
 
