@@ -1,4 +1,4 @@
-package me.xtrm.atlaspluginloader.api.load.transform;
+package me.xtrm.atlaspluginloader.api;
 
 import java.util.ArrayList;
 import java.util.List;

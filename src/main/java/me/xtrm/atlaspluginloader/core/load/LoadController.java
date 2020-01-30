@@ -3,6 +3,7 @@ package me.xtrm.atlaspluginloader.core.load;
 import me.ihaq.eventmanager.EventManager;
 import me.xtrm.atlaspluginloader.api.load.ILoadController;
 import me.xtrm.atlaspluginloader.api.load.plugin.IPluginManager;
+import me.xtrm.atlaspluginloader.api.types.IPlugin;
 import me.xtrm.atlaspluginloader.core.AtlasPluginLoader;
 import me.xtrm.atlaspluginloader.core.load.plugin.PluginManager;
 import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginLoadingException;
@@ -25,7 +26,11 @@ public class LoadController implements ILoadController {
 			AtlasPluginLoader.getLogger().fatal("Exception occured while loading plugins, exitting...");
 			e.printStackTrace();
 			System.exit(-1);
-		}	
+		}
+		
+		for(IPlugin ip : pluginManager.getLoadedPlugins()) {
+			ip.onInit();
+		}
 	}
 
 	@Override
