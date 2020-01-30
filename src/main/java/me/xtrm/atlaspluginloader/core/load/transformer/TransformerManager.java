@@ -8,9 +8,6 @@ import org.apache.logging.log4j.Logger;
 
 import me.xtrm.atlaspluginloader.api.transform.ITransformerManager;
 import me.xtrm.atlaspluginloader.api.transform.Transformer;
-import me.xtrm.atlaspluginloader.api.transform.TransformerAPI;
-import me.xtrm.atlaspluginloader.core.AtlasPluginLoader;
-import me.xtrm.atlaspluginloader.core.load.plugin.PluginClassLoader;
 
 public class TransformerManager implements ITransformerManager {
 
