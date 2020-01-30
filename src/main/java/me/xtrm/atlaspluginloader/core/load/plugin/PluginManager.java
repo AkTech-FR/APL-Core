@@ -3,6 +3,7 @@ package me.xtrm.atlaspluginloader.core.load.plugin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,28 +17,38 @@ import java.util.jar.Manifest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import me.xtrm.atlaspluginloader.api.load.plugin.IPluginManager;
 import me.xtrm.atlaspluginloader.api.types.IPlugin;
 import me.xtrm.atlaspluginloader.api.types.PluginInfo;
 import me.xtrm.atlaspluginloader.core.AtlasPluginLoader;
 import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginLoadingException;
+import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginManagerException;
 
-public class PluginManager {
+public class PluginManager implements IPluginManager {
 
 	private final Logger logger;
 	private final List<IPlugin> loadedPlugins;
+	
+	private Class<? extends PluginClassLoader> customClassLoader;
 	private PluginClassLoader classLoader;
 	
 	public PluginManager() {
-		logger = LogManager.getLogger("PluginManager");
-		loadedPlugins = new ArrayList<>();
+		this.logger = LogManager.getLogger("PluginManager");
+		this.loadedPlugins = new ArrayList<>();
 	}
 	
-	public void loadPlugins() throws IOException, PluginLoadingException {
-		Runtime.getRuntime().addShutdownHook(new Thread(this::onShutdown));
+	@Override
+	public void loadPlugins() throws PluginManagerException, PluginLoadingException {		
+		List<File> plugins = new ArrayList<>();
 		
-		List<File> plugins = findPlugins();
+		try {
+			plugins = findPlugins();
+		} catch(IOException e) {
+			throw new PluginManagerException("Error while searching for plugins: " + e.getMessage());
+		}
+		
 		if(plugins.isEmpty()) {
-			logger.info("No plugins found, stopping DeltaAPI...");
+			logger.info("No plugins found, stopping...");
 			return;
 		}
 		logger.info("Found " + plugins.size() + " potential plugins...");
@@ -45,10 +56,10 @@ public class PluginManager {
 		Map<File, String> pluginMapClass = new HashMap<>();
 		List<File> toRemove = new ArrayList<>();
 		for(File f : plugins) {
-			String mainClass = findPluginClass(f);
+			String mainClass = getPluginClass(f);
 			if(mainClass != null) {
 				if(mainClass.contains("$")) {
-					throw new PluginLoadingException("Error while loading " + f.getName() + ": XDelta-Plugin Class cannot be a subclass");
+					throw new PluginLoadingException("Error while loading " + f.getName() + ": APL-Plugin Class cannot be a subclass");
 				}
 				pluginMapClass.put(f, mainClass.replace('/', '.'));
 			}else {
@@ -61,14 +72,18 @@ public class PluginManager {
 		logger.info("Identified " + plugins.size() + " plugins.");
 		
 		URL[] arrAYY = new URL[plugins.size()];
-		for(int i = 0; i < plugins.size(); i++) {
-			arrAYY[i] = plugins.get(i).toURI().toURL();
+		try {
+			for(int i = 0; i < plugins.size(); i++) {
+				arrAYY[i] = plugins.get(i).toURI().toURL();
+			}
+		} catch(IOException e) {
+			throw new PluginManagerException("Error while initializing PluginManager: " + e.getMessage());
 		}
 		
 		List<PluginInfo> pluginInfos = new ArrayList<PluginInfo>();
 		
-		if(System.getProperty("xdelta.plugin.load") != null) {
-			String clazzName = System.getProperty("xdelta.plugin.load");
+		if(System.getProperty("apl.plugin.load") != null) {
+			String clazzName = System.getProperty("apl.plugin.load");
 			Class<?> cliPluginClass = null;
 			try {
 				cliPluginClass = Class.forName(clazzName);
@@ -76,45 +91,78 @@ public class PluginManager {
 				throw new PluginLoadingException("Error while loading CLI-Plugin " + clazzName + ": Main Class not found!");
 			}
 			IPlugin idp = null;
+			try {
+				idp = (IPlugin)cliPluginClass.getConstructor().newInstance();
+			} catch (ReflectiveOperationException e) {
+				throw new PluginLoadingException("Error while loading CLI-Plugin " + clazzName + ": Main Class doesn't implement " + IPlugin.class.getSimpleName() + "!");
+			}
 		}
 		
-		classLoader = new PluginClassLoader(arrAYY, PluginManager.class.getClassLoader());
+		if(customClassLoader != null) {
+			classLoader = new PluginClassLoader(arrAYY, PluginManager.class.getClassLoader());
+		}else {
+			try {
+				classLoader = customClassLoader.getDeclaredConstructor(URL[].class).newInstance(arrAYY);
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				throw new PluginManagerException("Error while loading PluginClassLoader: " + e.getMessage());
+			}
+		}
 		for(File f : pluginMapClass.keySet()) {
 			String mainClazz = pluginMapClass.get(f);
 			Class<?> cla$$ = null;
 			try {
 				cla$$ = classLoader.loadClass(mainClazz);
 			} catch(ClassNotFoundException e) {
-				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class " + mainClazz + " not found!");
+				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class " + mainClazz + " not found on " + classLoader.getClass().getSimpleName() + "!");
 			}
+			
+			if(cla$$.isAnnotationPresent(PluginInfo.class)) {
+				PluginInfo info = cla$$.getDeclaredAnnotation(PluginInfo.class);
+				for(PluginInfo pi : pluginInfos) {
+					if(pi.name().equalsIgnoreCase(info.name())) {
+						throw new PluginLoadingException("Error while loading " + f.getName() + ": Loaded Plugin " + pi.name() + " already has that name!");
+					}
+				}
+				pluginInfos.add(info);
+			}else {
+				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't have " + PluginInfo.class.getSimpleName() + " annotation");
+			}
+			
+			if(!Arrays.asList(cla$$.getInterfaces()).contains(IPlugin.class)) {
+				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't implement " + IPlugin.class.getSimpleName() + "!");
+			}
+			
 			IPlugin idp = null;
 			try {
 				idp = (IPlugin)cla$$.getConstructor().newInstance();
 			} catch (ReflectiveOperationException e) {
-				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't implement IDeltaPlugin!");
+				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't implement " + IPlugin.class.getSimpleName() + "!");
 			}
+			
 			if(idp != null) {
-				if(cla$$.isAnnotationPresent(PluginInfo.class)) {
-					PluginInfo info = cla$$.getDeclaredAnnotation(PluginInfo.class);
-					for(PluginInfo pi : pluginInfos) {
-						if(pi.name().equalsIgnoreCase(info.name())) {
-							throw new PluginLoadingException("Error while loading " + f.getName() + ": Plugin " + pi.name() + " already has that name!");
-						}
-					}
-					logger.info("Loaded plugin " + info.name() + " version " + info.version() + " by " + info.author());
-					pluginInfos.add(info);
-					loadedPlugins.add(idp);
-				}else {
-					throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't have PluginInfo annotation");
-				}
+				
 			}else {
-				throw new Error("This shouldn't be happening...? fuck me");
+				throw new PluginLoadingException("Critical Error, IDP is null for " + cla$$.getName() + " (has? " + Arrays.asList(cla$$.getInterfaces()).contains(IPlugin.class) + ") (This shouldn't be happening...? Report me to the devs quicc)");
 			}
+			
+//			if(idp != null) {
+//				if(cla$$.isAnnotationPresent(PluginInfo.class)) {
+//					PluginInfo info = cla$$.getDeclaredAnnotation(PluginInfo.class);
+//					for(PluginInfo pi : pluginInfos) {
+//						if(pi.name().equalsIgnoreCase(info.name())) {
+//							throw new PluginLoadingException("Error while loading " + f.getName() + ": Loaded Plugin " + pi.name() + " already has that name!");
+//						}
+//					}
+//					pluginInfos.add(info);
+//					loadedPlugins.add(idp);
+//					logger.info("Loaded plugin " + info.name() + " version " + info.version() + " by " + info.author());
+//				}else {
+//					throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't have " + PluginInfo.class.getSimpleName() + " annotation");
+//				}
+//			}else {
+//				throw new Error("This shouldn't be happening...?");
+//			}
 		}
-	}
-	
-	private void onShutdown() {
-		loadedPlugins.forEach(IPlugin::onShutdown);
 	}
 	
 	private List<File> findPlugins() throws IOException {
@@ -128,30 +176,42 @@ public class PluginManager {
 		List<File> files = Arrays.asList(fe.listFiles());
 		if(files.isEmpty()) return addons;
 		
-		files.stream().filter(f -> f.getName().endsWith(".jar")).filter(this::checkPlugin).forEach(addons::add);
+		files.stream().filter(f -> f.getName().endsWith(".jar")).filter(this::isPlugin).forEach(addons::add);
 		files.clear();
 		
 		return addons;
 	}
-	
-	private boolean checkPlugin(File f) {
-		return findPluginClass(f) != null;
+
+	@Override
+	public boolean isPlugin(File f) {
+		return getPluginClass(f) != null;
 	}
-	
-	private String findPluginClass(File f) {
+
+	@Override
+	public String getPluginClass(File f) {
 		String cla$$ = null;
 		try {
 			JarInputStream jarStream = new JarInputStream(new FileInputStream(f));
 			Manifest mf = jarStream.getManifest();
 			Attributes mainAttribs = mf.getMainAttributes();
-			if(mainAttribs.getValue("XDelta-Plugin") != null) {
-				cla$$ = mainAttribs.getValue("XDelta-Plugin");
+			if(mainAttribs.getValue("APL-Plugin") != null) {
+				cla$$ = mainAttribs.getValue("APL-Plugin");
 			}
 			jarStream.close();
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
 		return cla$$;
+	}
+
+	@Override
+	public void setPluginClassLoader(Class<? extends PluginClassLoader> cla$$) {
+		this.customClassLoader = cla$$;
+	}
+	
+	@Override
+	public List<IPlugin> getLoadedPlugins() {
+		return loadedPlugins;
 	}
 	
 }

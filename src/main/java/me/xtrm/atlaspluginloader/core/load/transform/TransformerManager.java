@@ -1,4 +1,4 @@
-package me.xtrm.atlaspluginloader.core.load.transformer;
+package me.xtrm.atlaspluginloader.core.load.transform;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import me.xtrm.atlaspluginloader.api.transform.ITransformerManager;
-import me.xtrm.atlaspluginloader.api.transform.Transformer;
+import me.xtrm.atlaspluginloader.api.load.transform.ITransformerManager;
+import me.xtrm.atlaspluginloader.api.load.transform.Transformer;
 
 public class TransformerManager implements ITransformerManager {
 

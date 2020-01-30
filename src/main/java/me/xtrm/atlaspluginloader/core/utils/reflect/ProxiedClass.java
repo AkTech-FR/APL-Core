@@ -1,4 +1,4 @@
-package me.xtrm.atlaspluginloader.api.reflect;
+package me.xtrm.atlaspluginloader.core.utils.reflect;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
@@ -7,11 +7,16 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 
-public class ReflectedClass {
+/**
+ * Handy class for Reflection Operations
+ * 
+ * @author Fox2Code
+ */
+public class ProxiedClass {
 	
     private final Object object;
 
-    public ReflectedClass(Object object) {
+    public ProxiedClass(Object object) {
         this.object = object;
     }
 
@@ -23,8 +28,8 @@ public class ReflectedClass {
         return this.object;
     }
 
-    public ReflectedClass get(String name) throws ReflectiveOperationException {
-        return new ReflectedClass(get0(name));
+    public ProxiedClass get(String name) throws ReflectiveOperationException {
+        return new ProxiedClass(get0(name));
     }
 
     public Object get0(String name) throws ReflectiveOperationException {
@@ -32,15 +37,15 @@ public class ReflectedClass {
     }
 
     public void set(String name, Object value) throws ReflectiveOperationException {
-        set0(name, value instanceof ReflectedClass ? ((ReflectedClass)value).getHandle() : value);
+        set0(name, value instanceof ProxiedClass ? ((ProxiedClass)value).getHandle() : value);
     }
 
     public void set0(String name, Object value) throws ReflectiveOperationException {
         findField(name).set(this.getObject(), value);
     }
 
-    public ReflectedClass run(String name, Object... args) throws ReflectiveOperationException {
-    	return new ReflectedClass(run0(name, args));
+    public ProxiedClass run(String name, Object... args) throws ReflectiveOperationException {
+    	return new ProxiedClass(run0(name, args));
     }
     
     public Object run0(String name, Object... args) throws ReflectiveOperationException {
@@ -49,7 +54,7 @@ public class ReflectedClass {
 
     @Override
     public String toString() {
-        return "ReflectedClass{"+ this.object + "}";
+        return "ProxiedClass{"+ this.object + "}";
     }
 
     public Class getObjClass() {
@@ -60,9 +65,9 @@ public class ReflectedClass {
         return this.object == null ? "null" : this.getObjClass().getName();
     }
 
-    public ReflectedClass newInstance(Object... args) throws ReflectiveOperationException {
-        for (int i = 0;i < args.length;i++) if (args[i] instanceof ReflectedClass) args[i] = ((ReflectedClass) args[i]).getObject();
-        return new ReflectedClass(newInstance0(args));
+    public ProxiedClass newInstance(Object... args) throws ReflectiveOperationException {
+        for (int i = 0;i < args.length;i++) if (args[i] instanceof ProxiedClass) args[i] = ((ProxiedClass) args[i]).getObject();
+        return new ProxiedClass(newInstance0(args));
     }
 
     public Object newInstance0(Object... args) throws ReflectiveOperationException {
@@ -172,7 +177,7 @@ public class ReflectedClass {
         throw new IllegalArgumentException("Invalid Primitive type!");
     }
 
-    public static ReflectedClass forName(String name) throws ClassNotFoundException {
-        return new ReflectedClass(Class.forName(name));
+    public static ProxiedClass forName(String name) throws ClassNotFoundException {
+        return new ProxiedClass(Class.forName(name));
     }
 }

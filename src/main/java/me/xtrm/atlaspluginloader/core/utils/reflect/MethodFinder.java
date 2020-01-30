@@ -1,4 +1,4 @@
-package me.xtrm.atlaspluginloader.api.reflect;
+package me.xtrm.atlaspluginloader.core.utils.reflect;
 
 import java.lang.reflect.Method;
 
