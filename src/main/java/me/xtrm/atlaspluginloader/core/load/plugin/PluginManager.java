@@ -20,9 +20,10 @@ import org.apache.logging.log4j.Logger;
 import me.xtrm.atlaspluginloader.api.load.plugin.IPluginManager;
 import me.xtrm.atlaspluginloader.api.types.IPlugin;
 import me.xtrm.atlaspluginloader.api.types.PluginInfo;
-import me.xtrm.atlaspluginloader.core.AtlasPluginLoader;
-import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginLoadingException;
-import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginManagerException;
+import me.xtrm.atlaspluginloader.core.APLProvider;
+import me.xtrm.atlaspluginloader.core.events.EventPluginLoaded;
+import me.xtrm.atlaspluginloader.core.exception.plugin.PluginLoadingException;
+import me.xtrm.atlaspluginloader.core.exception.plugin.PluginManagerException;
 
 public class PluginManager implements IPluginManager {
 
@@ -41,6 +42,7 @@ public class PluginManager implements IPluginManager {
 	public void loadPlugins() throws PluginManagerException, PluginLoadingException {		
 		List<File> plugins = new ArrayList<>();
 		
+		// Find plugins jars
 		try {
 			plugins = findPlugins();
 		} catch(IOException e) {
@@ -53,6 +55,7 @@ public class PluginManager implements IPluginManager {
 		}
 		logger.info("Found " + plugins.size() + " potential plugins...");
 		
+		// Add all main classes
 		Map<File, String> pluginMapClass = new HashMap<>();
 		List<File> toRemove = new ArrayList<>();
 		for(File f : plugins) {
@@ -71,17 +74,7 @@ public class PluginManager implements IPluginManager {
 		
 		logger.info("Identified " + plugins.size() + " plugins.");
 		
-		URL[] arrAYY = new URL[plugins.size()];
-		try {
-			for(int i = 0; i < plugins.size(); i++) {
-				arrAYY[i] = plugins.get(i).toURI().toURL();
-			}
-		} catch(IOException e) {
-			throw new PluginManagerException("Error while initializing PluginManager: " + e.getMessage());
-		}
-		
-		List<PluginInfo> pluginInfos = new ArrayList<PluginInfo>();
-		
+		// CLI/Dev Plugin
 		if(System.getProperty("apl.plugin.load") != null) {
 			String clazzName = System.getProperty("apl.plugin.load");
 			Class<?> cliPluginClass = null;
@@ -98,6 +91,15 @@ public class PluginManager implements IPluginManager {
 			}
 		}
 		
+		// Setup ClassLoader
+		URL[] arrAYY = new URL[plugins.size()];
+		try {
+			for(int i = 0; i < plugins.size(); i++) {
+				arrAYY[i] = plugins.get(i).toURI().toURL();
+			}
+		} catch(IOException e) {
+			throw new PluginManagerException("Error while initializing PluginManager: " + e.getMessage());
+		}		
 		if(customClassLoader != null) {
 			classLoader = new PluginClassLoader(arrAYY, PluginManager.class.getClassLoader());
 		}else {
@@ -107,7 +109,12 @@ public class PluginManager implements IPluginManager {
 				throw new PluginManagerException("Error while loading PluginClassLoader: " + e.getMessage());
 			}
 		}
+		
+		// Plugin Loading Stuff
+		List<PluginInfo> pluginInfos = new ArrayList<PluginInfo>();
 		for(File f : pluginMapClass.keySet()) {
+			
+			// Check main class
 			String mainClazz = pluginMapClass.get(f);
 			Class<?> cla$$ = null;
 			try {
@@ -116,8 +123,9 @@ public class PluginManager implements IPluginManager {
 				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class " + mainClazz + " not found on " + classLoader.getClass().getSimpleName() + "!");
 			}
 			
+			PluginInfo info = null;
 			if(cla$$.isAnnotationPresent(PluginInfo.class)) {
-				PluginInfo info = cla$$.getDeclaredAnnotation(PluginInfo.class);
+				info = cla$$.getDeclaredAnnotation(PluginInfo.class);
 				for(PluginInfo pi : pluginInfos) {
 					if(pi.name().equalsIgnoreCase(info.name())) {
 						throw new PluginLoadingException("Error while loading " + f.getName() + ": Loaded Plugin " + pi.name() + " already has that name!");
@@ -139,29 +147,16 @@ public class PluginManager implements IPluginManager {
 				throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't implement " + IPlugin.class.getSimpleName() + "!");
 			}
 			
+			// Add to loaded plugins
 			if(idp != null) {
+				loadedPlugins.add(idp);
+				logger.info("Loaded plugin " + info.name() + " version " + info.version() + " by " + info.author());
 				
+				EventPluginLoaded e = new EventPluginLoaded(info);
+				APLProvider.getPrimaryAPL().getLoadController().getEventManager().callEvent(e);
 			}else {
 				throw new PluginLoadingException("Critical Error, IDP is null for " + cla$$.getName() + " (has? " + Arrays.asList(cla$$.getInterfaces()).contains(IPlugin.class) + ") (This shouldn't be happening...? Report me to the devs quicc)");
 			}
-			
-//			if(idp != null) {
-//				if(cla$$.isAnnotationPresent(PluginInfo.class)) {
-//					PluginInfo info = cla$$.getDeclaredAnnotation(PluginInfo.class);
-//					for(PluginInfo pi : pluginInfos) {
-//						if(pi.name().equalsIgnoreCase(info.name())) {
-//							throw new PluginLoadingException("Error while loading " + f.getName() + ": Loaded Plugin " + pi.name() + " already has that name!");
-//						}
-//					}
-//					pluginInfos.add(info);
-//					loadedPlugins.add(idp);
-//					logger.info("Loaded plugin " + info.name() + " version " + info.version() + " by " + info.author());
-//				}else {
-//					throw new PluginLoadingException("Error while loading " + f.getName() + ": Main Class doesn't have " + PluginInfo.class.getSimpleName() + " annotation");
-//				}
-//			}else {
-//				throw new Error("This shouldn't be happening...?");
-//			}
 		}
 	}
 	
@@ -170,7 +165,7 @@ public class PluginManager implements IPluginManager {
 		
 		List<File> addons = new ArrayList<>();
 		
-		File fe = new File(AtlasPluginLoader.getDataDir(), "plugins");
+		File fe = new File(APLProvider.getPrimaryAPL().getDataDir(), "plugins");
 		if(!fe.exists()) fe.mkdirs();
 		
 		List<File> files = Arrays.asList(fe.listFiles());
@@ -205,7 +200,12 @@ public class PluginManager implements IPluginManager {
 	}
 
 	@Override
-	public void setPluginClassLoader(Class<? extends PluginClassLoader> cla$$) {
+	public PluginClassLoader getPluginClassLoader() {
+		return classLoader;
+	}
+	
+	@Override
+	public void setPluginClassLoaderType(Class<? extends PluginClassLoader> cla$$) {
 		this.customClassLoader = cla$$;
 	}
 	

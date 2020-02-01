@@ -1,4 +1,4 @@
-package me.xtrm.atlaspluginloader.core.load.plugin.exception;
+package me.xtrm.atlaspluginloader.core.exception.plugin;
 
 @SuppressWarnings("serial")
 public class PluginManagerException extends RuntimeException {

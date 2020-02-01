@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.List;
 
 import me.xtrm.atlaspluginloader.api.types.IPlugin;
+import me.xtrm.atlaspluginloader.core.exception.plugin.PluginLoadingException;
+import me.xtrm.atlaspluginloader.core.exception.plugin.PluginManagerException;
 import me.xtrm.atlaspluginloader.core.load.plugin.PluginClassLoader;
-import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginLoadingException;
-import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginManagerException;
 
 public interface IPluginManager {
 	
@@ -15,7 +15,8 @@ public interface IPluginManager {
 	boolean isPlugin(File f);
 	String getPluginClass(File f);
 	
-	void setPluginClassLoader(Class<? extends PluginClassLoader> cla$$);
+	PluginClassLoader getPluginClassLoader();
+	void setPluginClassLoaderType(Class<? extends PluginClassLoader> cla$$);
 	
 	List<IPlugin> getLoadedPlugins();
 

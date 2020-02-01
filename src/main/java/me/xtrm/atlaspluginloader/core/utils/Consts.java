@@ -1,4 +1,4 @@
-package me.xtrm.atlaspluginloader.core;
+package me.xtrm.atlaspluginloader.core.utils;
 
 public class Consts {
 	

@@ -6,44 +6,42 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import me.xtrm.atlaspluginloader.api.load.ILoadController;
-import me.xtrm.atlaspluginloader.core.load.LoadController;
+import me.xtrm.atlaspluginloader.api.setup.ISetupManager;
+import me.xtrm.atlaspluginloader.core.utils.Consts;
 
 public class AtlasPluginLoader {
 	
-	private static ILoadController loadController;
 	private static Logger logger;
-	private static File aplDataDir;
 	
-	private static boolean initialized;
+	private ILoadController loadController;
+	private File aplDataDir;
 	
-	public static void setup(File dataDir) {
+	private boolean initialized;
+	
+	public void setup(ISetupManager iSetupManager) {
 		if(initialized) return;
 		
-		aplDataDir = dataDir;
+		aplDataDir = iSetupManager.getDataFile();
 		
 		logger = LogManager.getLogger(Consts.NAME);
 		logger.info("Setting up " + Consts.NAME + " v" + Consts.VER);
 		
-		loadController = new LoadController();
+		loadController = iSetupManager.getLoadController();
 	}
 	
-	public static void initialize() {
+	public void initialize() {
 		if(initialized) return;
 		
 		loadController.initialize();
-	}
-	
-	public static void finishInitialization() {
-		if(initialized) return;
 		
 		initialized = true;
 	}
 	
-	public static File getDataDir() {
+	public File getDataDir() {
 		return aplDataDir;
 	}
 	
-	public static ILoadController getLoadController() {
+	public ILoadController getLoadController() {
 		return loadController;
 	}
 	

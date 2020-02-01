@@ -1,24 +1,33 @@
 package me.xtrm.atlaspluginloader.core.load;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import me.ihaq.eventmanager.EventManager;
 import me.xtrm.atlaspluginloader.api.load.ILoadController;
 import me.xtrm.atlaspluginloader.api.load.plugin.IPluginManager;
+import me.xtrm.atlaspluginloader.api.load.transform.Transformer;
 import me.xtrm.atlaspluginloader.api.types.IPlugin;
 import me.xtrm.atlaspluginloader.core.AtlasPluginLoader;
+import me.xtrm.atlaspluginloader.core.exception.plugin.PluginLoadingException;
+import me.xtrm.atlaspluginloader.core.exception.plugin.PluginManagerException;
 import me.xtrm.atlaspluginloader.core.load.plugin.PluginManager;
-import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginLoadingException;
-import me.xtrm.atlaspluginloader.core.load.plugin.exception.PluginManagerException;
 
 public class LoadController implements ILoadController {
 	
 	private EventManager eventManager;
 	private IPluginManager pluginManager;
 	
+	private List<Transformer> internalTransformers;
+	
 	public LoadController() {
-		pluginManager = new PluginManager();
-		eventManager = new EventManager();
+		this.pluginManager = new PluginManager();
+		this.eventManager = new EventManager();
+		
+		this.internalTransformers = new ArrayList<>();
 	}
 	
+	@Override
 	public void initialize() {
 		try {
 			pluginManager.loadPlugins();
@@ -27,10 +36,21 @@ public class LoadController implements ILoadController {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		
-		for(IPlugin ip : pluginManager.getLoadedPlugins()) {
-			ip.onInit();
-		}
+	}
+
+	@Override
+	public void registerInternalPlugin(IPlugin internalPlugin) {
+		pluginManager.getLoadedPlugins().add(internalPlugin);
+	}
+	
+	@Override
+	public void registerInternalTransformer(Transformer internalTransformer) {
+		internalTransformers.add(internalTransformer);
+	}
+
+	@Override
+	public List<Transformer> getInternalTransformers() {
+		return internalTransformers;
 	}
 
 	@Override
@@ -42,5 +62,4 @@ public class LoadController implements ILoadController {
 	public IPluginManager getPluginManager() {
 		return pluginManager;
 	}
-
 }
